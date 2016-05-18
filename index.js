@@ -45,6 +45,7 @@ function CASAuthentication(options) {
     }
 
     this.cas_version = options.cas_version !== undefined ? options.cas_version : '3.0';
+    this.validate_path = options.validate_path;
 
     if (this.cas_version === '1.0') {
         this._validateUri = '/validate';
@@ -298,7 +299,7 @@ CASAuthentication.prototype._handleTicket = function(req, res, next) {
     if (['1.0', '2.0', '3.0'].indexOf(this.cas_version) >= 0){
         requestOptions.method = 'GET';
         requestOptions.path = url.format({
-            pathname: this.cas_path + this._validateUri,
+            pathname: this.validate_path ? this.validate_path : (this.cas_path + this._validateUri),
             query: {
                 service: this.service_url + url.parse(req.url).pathname,
                 ticket: req.query.ticket
@@ -323,7 +324,7 @@ CASAuthentication.prototype._handleTicket = function(req, res, next) {
 
         requestOptions.method = 'POST';
         requestOptions.path = url.format({
-            pathname: this.cas_path + this._validateUri,
+            pathname: this.validate_path ? this.validate_path : (this.cas_path + this._validateUri),
             query : {
                 TARGET : this.service_url + url.parse(req.url).pathname,
                 ticket: ''
