@@ -46,6 +46,7 @@ function CASAuthentication(options) {
 
     this.cas_version = options.cas_version !== undefined ? options.cas_version : '3.0';
     this.validate_path = options.validate_path;
+    this.use_errors = options.use_errors;
 
     if (this.cas_version === '1.0') {
         this._validateUri = '/validate';
@@ -227,7 +228,11 @@ CASAuthentication.prototype._handle = function(req, res, next, authType) {
     }
     // If the authentication type is BLOCK, simply send a 401 response.
     else if (authType === AUTH_TYPE.BLOCK) {
-        res.sendStatus(401);
+        if (this.use_errors) {
+          next(new AuthError('CAS Block'));
+        } else {
+          res.sendStatus(401);
+        }
     }
     // If there is a CAS ticket in the query string, validate it with the CAS server.
     else if (req.query && req.query.ticket) {
@@ -346,7 +351,11 @@ CASAuthentication.prototype._handleTicket = function(req, res, next) {
             this._validate(body, function(err, user, attributes) {
                 if (err) {
                     console.log(err);
-                    res.sendStatus(401);
+                    if (this.use_errors) {
+                      next(new AuthError('CAS Validation Error'));
+                    } else {
+                      res.sendStatus(401);
+                    }
                 }
                 else {
                     req.session[ this.session_name ] = user;
@@ -359,13 +368,21 @@ CASAuthentication.prototype._handleTicket = function(req, res, next) {
         }.bind(this));
         response.on('error', function(err) {
             console.log('Response error from CAS: ', err);
-            res.sendStatus(401);
+            if (this.use_errors) {
+              next(new AuthError('CAS Response Error'));
+            } else {
+              res.sendStatus(401);
+            }
         }.bind(this));
     }.bind(this));
 
     request.on('error', function(err) {
         console.log('Request error with CAS: ', err);
-        res.sendStatus(401);
+        if (this.use_errors) {
+          next(new AuthError('CAS Request Error'));
+        } else {
+          res.sendStatus(401);
+        }
     }.bind(this));
 
     if (this.cas_version === 'saml1.1') {
