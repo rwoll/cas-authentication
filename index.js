@@ -2,7 +2,8 @@ var url           = require('url'),
     http          = require('http'),
     https         = require('https'),
     parseXML      = require('xml2js').parseString,
-    XMLprocessors = require('xml2js/lib/processors');
+    XMLprocessors = require('xml2js/lib/processors'),
+    AuthError     = require('./errors').CASAuthenticationError;
 
 /**
  * The CAS authentication types.
